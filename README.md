@@ -1,6 +1,5 @@
-# Smart Bin
+This branch is to include general scripts and information  on using the Pi.
 
-Software for Robotic bin which detects paper balls being thrown at it and moves to catch them.
 
 
 For cornos Pi:
