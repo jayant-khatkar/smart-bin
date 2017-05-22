@@ -13,14 +13,17 @@ ser = serial.Serial(
 	bytesize = serial.EIGHTBITS,
 	timeout = 1
 )
+if ser is None:
+	print 'Sabertooth not found'
+	 
+print 'sabertooth initialized'
 
-
-command = chr(120) # this value should move motor 1 at half speed
+command = chr(0) # this value should move motor 1 at half speed
 try:
-	while 1:
+	while True:
 		ser.write(command)
 		ser.flush()
-		time.sleep(2)
+#		time.sleep(2)
 except KeyboardInterrupt:
 	ser.close()
 	print 'end'
