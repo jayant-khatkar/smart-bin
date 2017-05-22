@@ -15,8 +15,19 @@ ser = serial.Serial(
 )
 
 
-command = 95 # this value should move motor 1 at half speed
-while 1:
-	ser.write('yo %d \n' % (command))
-	time.sleep(1)
+command = chr(120) # this value should move motor 1 at half speed
+try:
+	while 1:
+		ser.write(command)
+		ser.flush()
+		time.sleep(2)
+except KeyboardInterrupt:
+	ser.close()
+	print 'end'
+
+#print 'end'
+#ser.write('%d' % (command))
+#time.sleep(2)
+#ser.write('%d' % (command))
+#time.sleep(2)
 
