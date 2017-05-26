@@ -1,0 +1,10 @@
+import pygame, sys, time
+from pygame.locals import *
+
+pygame.init(
+pygame.joystick.init()
+joystick_count = pygame.joystick.getcount()
+joystick = pygame.joystick.Joystick(0)
+joystick.init()
+num_axes = joystick.get_numaxes()
+axis = joystick.get_axis(i)

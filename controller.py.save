@@ -1,0 +1,15 @@
+pygamefrom triangula.input import SixAxis, SixAxisResource
+
+def handler(button):
+	print 'Button {} pressed',format(button)
+
+
+with SixAxisResource(bind_defaults=True) as joystick:
+
+	joystick.register_button_handler(handler, SixAxis.BUTTON_SQUARE)
+	while 1:
+		x = joystick.axes[0].corrected_value()
+		y = joystick.axes[1].corrected_value()
+		print(x,y)
+
+

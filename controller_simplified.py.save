@@ -1,0 +1,65 @@
+import pygame, sys, time
+import RPi.GPIO as GPIO
+from pygame.locals import *
+
+GPIO.setmode(GPIO.BCM)
+servoPin = 26
+frequency = 50 #Hz
+GPIO.setup(servoPin,GPIO.OUT)
+pwm = GPIO.PWM(servoPin,frequency)
+pwm.start(6.5)
+max_duty = 12
+min_duty = 2
+duty_range = max_duty - min_duty
+
+
+pygame.init()
+pygame.joystick.init()
+joystick = pygame.joystick.Joystick(0)
+joystick.init()
+hello jayant screen = pygame.display.set_mode((400,300))
+pygame.display.set_caption('Hello World')
+
+interval = 0.5
+
+loopQuit = False
+while loopQuit == False:
+        outstr = ""
+
+        for i in range(0,1):
+                axis=joystick.get_axis(i)
+					
+print
+                outstr = axis
+		
+		if outstr > 0 or outstr < 0:
+			angle = 90+90*outstr
+		elif outstr ==0:
+			angle = 0
+
+	angle = round(angle)
+        print(angle)
+
+	desiredPosition = angle
+        DC = (95./1800.)*desiredPosition+min_duty
+        pwm.ChangeDutyCycle(DC)
+
+
+
+        for event in pygame.event.get():
+                if event.type == QUIT:
+                        loopQuit = True
+                elif event.type == pygame.KEYDOWN:
+                        if event.key == pygame.K_ESCAPE:
+                                loopQuit = True
+
+
+
+        time.sleep(interval)
+
+pwm.stop()
+GPIO.cleanup()
+pygame.quit()
+sys.exit()
+
+
