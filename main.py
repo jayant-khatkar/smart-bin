@@ -54,39 +54,84 @@ bigdepth = Frame(1920, 1082, 4) if need_bigdepth else None
 color_depth_map = Frame(424, 512,4) \
     if need_color_depth_map else None
 
-#huncher = cv2.createBackgroundSubtractorMOG2()
-start = True
+# Get the first frame
+frames = listener.waitForNewFrame()
+l_depth= frames["depth"]
+listener.release(frames)
+
+# initialise variables
+ballSeen = 0
+
 while True:
+
+    # Get the latest data from the kinect
     frames = listener.waitForNewFrame()
-
     color = frames["color"]
-    #####ir = frames["ir"]
+    # ir = frames["ir"]
     depth= frames["depth"]
-    dep_arr = depth.asarray()
-    if start:
-        start=False
-        last_depth= depth
-        ldep_arr = last_depth.asarray()
     registration.apply(color, depth, undistorted, registered)
-    #masked = huncher.apply(depth.asarray() / 4500.)
 
-    diff = (ldep_arr-dep_arr)*(dep_arr>0)*(ldep_arr>0)
-    diff = diff*(diff>300)
-    diff2 = cv2.boxFilter(diff, -1, (5,5), anchor=(-1,-1), normalize=False)
-    max_pos = np.argmax(diff2)
-    max_val = np.max(diff2)
-    x_pos = max_pos%512
-    y_pos = int(np.floor(max_pos/512))
+    # Time since last frame
+    dt = depth.timestamp - l_depth.timestamp
+
+    # If we dont know the position of the ball
+    if ballSeen < 2:
+
+        # Search frame thoroughly
+        found, pos = SearchForBall(depth, l_depth)
+
+        if found:
+            ballSeen = ballSeen + 1
+            timeSinceFound = 0
+
+            # If we see the ball two frames in a row,
+            # get the initial state of the Kalman filter
+            if ballSeen==2:
+                x_hat = getInitialState(pos,pos_last)
+
+        pos_last = pos
+
+    else:
+        # Predict where the ball will be
+        predicted_pos = KalmanPredict(x_hat, timeSinceFound)
+
+        # Search in the predicted region only
+        found, pos = SearchRegion(predicted_pos)
+
+        # If we found a reasonable match, update the Kalman state
+        if found:
+            x_hat, Pk = KalmanUpdate(x_hat, Pk)
+            timeSinceFound = 0
+
+        # Otherwise, keep going for 0.5s before giving up
+        else:
+            timeSinceFound = timeSinceFound + dt
+            if timeSinceFound >500: #haven't seen ball for 0.5 second
+                ballSeen=0    #then consider the ball lost
+
+
+
+
+    #color, _, depth = getFrames(color=True, ir=False, depth=True)
+    # dep_arr = depth.asarray()
+
+    # diff = (l_depth.asarray()-dep_arr)*(dep_arr>0)*(l_depth.asarray()>0)
+    # diff = diff*(diff>300)
+    # diff2 = cv2.boxFilter(diff, -1, (5,5), anchor=(-1,-1), normalize=False)
+    # max_pos = np.argmax(diff2)
+    # max_val = np.max(diff2)
+    # x_pos = max_pos%512
+    # y_pos = int(np.floor(max_pos/512))
     #draw circle
 
     disp_image = registered.asarray(np.uint8)
-    print(max_val)
-    if max_val>10000:
-        cv2.circle(disp_image, (x_pos,y_pos), 10, 255, thickness=3, lineType=8, shift=0)
+    # print(max_val)
+    # if max_val>10000:
+        # cv2.circle(disp_image, (x_pos,y_pos), 10, 255, thickness=3, lineType=8, shift=0)
     # cv2.imshow("ir", ir.asarray() / 65535.)
-    #cv2.imshow("depth", depth / 4500.)
-    #cv2.imshow("depth2", diff)
-    #cv2.imshow("color", cv2.resize(color.asarray(),
+    # cv2.imshow("depth", depth / 4500.)
+    # cv2.imshow("depth2", diff)
+    # cv2.imshow("color", cv2.resize(color.asarray(),
     #                               (int(1920 / 3), int(1080 / 3))))
     cv2.imshow("registered", disp_image)
 
@@ -95,12 +140,12 @@ while True:
 #                                          (int(1920 / 3), int(1082 / 3))))
 #    if need_color_depth_map:
 #        cv2.imshow("color_depth_map", color_depth_map.reshape(424, 512))
-    last_depth= depth
-    ldep_arr = last_depth.asarray()
-    listener.release(frames)
+
+    l_depth = depth
+
 
     key = cv2.waitKey(delay=1)
-
+    listener.release(frames)
     if key == ord('q'):
         device.stop()
         device.close()
