@@ -1,26 +1,3 @@
-st login: Sun May 28 19:45:08 on ttys000
-sig:~ Alex$ ls
-Desktop		Downloads	Movies		Pictures	smart-bin
-Documents	Library		Music		Public
-sig:~ Alex$ cd Desktop/
-sig:Desktop Alex$ pwd
-/Users/Alex/Desktop
-sig:Desktop Alex$ ls
-mac support for itunes login.rtf
-sig:Desktop Alex$ cd ..
-sig:~ Alex$ ls
-Desktop		Downloads	Movies		Pictures	smart-bin
-Documents	Library		Music		Public
-sig:~ Alex$ cd smart-bin/
-sig:smart-bin Alex$ ls
-README.md		main.py			sample.py
-client.py		netcat.py		server.py
-client_forever.py	netcat.pyc		server_forever.py
-helloGit		netcat_example.py
-sig:smart-bin Alex$ vim client_forever.py 
-
-
-
 
 # attempt at making a client that will poll forever
 
