@@ -11,4 +11,4 @@ sudo nc -l 2999
 __server:__
 sudo nc <IP address of client> 2999
 
-
+- server_forever and client_forever run automated python data between 2 PCs successfully. need to try on pi
