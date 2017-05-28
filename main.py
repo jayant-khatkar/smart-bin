@@ -8,7 +8,7 @@ from pylibfreenect2 import Freenect2, SyncMultiFrameListener
 from pylibfreenect2 import FrameType, Registration, Frame
 from pylibfreenect2 import createConsoleLogger, setGlobalLogger
 from pylibfreenect2 import LoggerLevel
-
+from ballTracker    import *
 try:
     from pylibfreenect2 import OpenCLPacketPipeline
     pipeline = OpenCLPacketPipeline()
@@ -41,7 +41,12 @@ device.start()
 # NOTE: must be called after device.start()
 registration = Registration(device.getIrCameraParams(),
                             device.getColorCameraParams())
-
+print('-----------------------')
+print(device.getIrCameraParams().cx)
+print(device.getIrCameraParams().cy)
+print(device.getIrCameraParams().fx)
+print(device.getIrCameraParams().fy)
+print('-----------------------')
 undistorted = Frame(512, 424, 4)
 registered = Frame(512, 424, 4)
 
@@ -57,11 +62,13 @@ color_depth_map = Frame(424, 512,4) \
 # Get the first frame
 frames = listener.waitForNewFrame()
 l_depth= frames["depth"]
+l_dep_arr = l_depth.asarray()
+l_time = l_depth.timestamp
+pos_last = (0,0,0)
 listener.release(frames)
 
 # initialise variables
 ballSeen = 0
-
 while True:
 
     # Get the latest data from the kinect
@@ -72,13 +79,13 @@ while True:
     registration.apply(color, depth, undistorted, registered)
 
     # Time since last frame
-    dt = depth.timestamp - l_depth.timestamp
-
+    dt = depth.timestamp - l_time
+    '''
     # If we dont know the position of the ball
     if ballSeen < 2:
 
         # Search frame thoroughly
-        found, pos = SearchForBall(depth, l_depth)
+        found, pos = SearchForBall(depth.asarray(), l_dep_arr)
 
         if found:
             ballSeen = ballSeen + 1
@@ -89,6 +96,8 @@ while True:
             if ballSeen==2:
                 x_hat = getInitialState(pos,pos_last)
 
+        else:
+            ballSeen = 0
         pos_last = pos
 
     else:
@@ -108,23 +117,28 @@ while True:
             timeSinceFound = timeSinceFound + dt
             if timeSinceFound >500: #haven't seen ball for 0.5 second
                 ballSeen=0    #then consider the ball lost
-
-
-
-
-    #color, _, depth = getFrames(color=True, ir=False, depth=True)
-    # dep_arr = depth.asarray()
-
-    # diff = (l_depth.asarray()-dep_arr)*(dep_arr>0)*(l_depth.asarray()>0)
-    # diff = diff*(diff>300)
-    # diff2 = cv2.boxFilter(diff, -1, (5,5), anchor=(-1,-1), normalize=False)
-    # max_pos = np.argmax(diff2)
-    # max_val = np.max(diff2)
+    '''
+    # max_pos = np.argmax(diff)
+    # max_val = np.max(diff)
     # x_pos = max_pos%512
     # y_pos = int(np.floor(max_pos/512))
     #draw circle
+    img = (depth.asarray()/2**4).astype('uint8')
+    # img = cv2.medianBlur(img,5)
 
-    disp_image = registered.asarray(np.uint8)
+    #circles = cv2.HoughCircles(img,cv2.HOUGH_GRADIENT,2,100,param1=50,param2=15,minRadius=0,maxRadius=15)
+    found, pos = SearchForBall(depth.asarray(), l_dep_arr)
+    #x_hat = getInitialState(pos,pos_last)
+    pos_last = pos
+    img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
+
+    # draw the outer circle
+    cv2.circle(img,(pos[0],pos[1]),10,(0,255,0),2)
+    # draw the center of the circle
+    #cv2.circle(img,(i[0],i[1]),2,(0,0,255),3)
+
+
+    #disp_image = registered.asarray(np.uint8)
     # print(max_val)
     # if max_val>10000:
         # cv2.circle(disp_image, (x_pos,y_pos), 10, 255, thickness=3, lineType=8, shift=0)
@@ -133,7 +147,7 @@ while True:
     # cv2.imshow("depth2", diff)
     # cv2.imshow("color", cv2.resize(color.asarray(),
     #                               (int(1920 / 3), int(1080 / 3))))
-    cv2.imshow("registered", disp_image)
+    cv2.imshow("registered", img)
 
     # if need_bigdepth:
 #        cv2.imshow("bigdepth", cv2.resize(bigdepth.asarray(np.float32),
@@ -141,7 +155,9 @@ while True:
 #    if need_color_depth_map:
 #        cv2.imshow("color_depth_map", color_depth_map.reshape(424, 512))
 
-    l_depth = depth
+    l_time = depth.timestamp
+    l_dep_arr = depth.asarray()
+
 
 
     key = cv2.waitKey(delay=1)
