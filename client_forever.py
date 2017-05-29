@@ -7,7 +7,7 @@ def read(port):
 	s = socket.socket()
 
 	
-	host = '10.19.92.44'
+	host = '172.17.33.125'# (172.. is Pi's IP, '10.19.92.44' is macs)
 	s.connect((host,port))
 
 	
