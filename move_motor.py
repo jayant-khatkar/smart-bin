@@ -18,13 +18,25 @@ if ser is None:
 	 
 print 'sabertooth initialized'
 
-command = chr(0) # this value should move motor 1 at half speed
+command = chr(127) # this value should move motor 1 at half speed
+'''
+ser.write(command)
+#ser.flush()
+time.sleep(10)
+ser.flush()
+ser.write(chr(0))
+ser.flush()
+ser.close()
+print 'end'
+'''
 try:
 	while True:
 		ser.write(command)
-		ser.flush()
+		ser.flush() # flush of file like objects. in this case, wait until all data is written.
 #		time.sleep(2)
 except KeyboardInterrupt:
+	ser.write(chr(0))
+	ser.flush()
 	ser.close()
 	print 'end'
 
