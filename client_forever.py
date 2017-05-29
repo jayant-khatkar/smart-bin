@@ -7,7 +7,7 @@ def read(port):
 	s = socket.socket()
 
 	
-	host = '192.168.2.9'
+	host = '10.19.92.44'
 	s.connect((host,port))
 
 	
