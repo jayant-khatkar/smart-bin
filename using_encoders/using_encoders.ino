@@ -21,6 +21,25 @@
             SS2    -------------------   SS2 (D8)
             GND    -------------------   GND
             VDD    -------------------   VCC (5.0V)
+
+
+  //OUR PIN OUT! ! ! !
+ LS7366 Breakout    -------------   Arduino
+   -----------------                    -------
+   S1                       7
+   MOSI                       51
+   MISO                       50
+   SCLK                       52
+   GND                        RAIL GND
+   5V                         RAIL 5V
+   I                          FLOAT
+   B                          ENCODER WHITE
+   A                          ENCODER YELLOW
+   V                          ENCODER BLUE
+   G                          ENCODER GREEN
+  MOTOR S1                    TX1
+   
+     
       
    License: CCAv3.0 Attribution-ShareAlike (http://creativecommons.org/licenses/by-sa/3.0/)
    You're free to use this code for any venture. Attribution is greatly appreciated. 
