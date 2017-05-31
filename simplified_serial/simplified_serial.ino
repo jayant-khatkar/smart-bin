@@ -1,7 +1,7 @@
 
 //SCRIPT WORKS ON MEGA. GOOD
 
-
+#define USBCON //uses Tx1 (see SabertoothSimplified.h)
 #include <SabertoothSimplified.h>
 SabertoothSimplified ST; // We'll name the Sabertooth object ST.
                          // For how to configure the Sabertooth, see the DIP Switch Wizard for
@@ -19,9 +19,11 @@ SabertoothSimplified ST; // We'll name the Sabertooth object ST.
 void setup()
 {
   SabertoothTXPinSerial.begin(9600); // This is the baud rate you chose with the DIP switches.
+  //serial3.begin(9600)
+  //Serial.write(120);
 }
 void loop()
 {
-  Serial.write(120);
+  Serial1.write(120);
   delay(100);
 }
