@@ -1,4 +1,7 @@
 
+//SCRIPT WORKS ON MEGA. GOOD
+
+
 #include <SabertoothSimplified.h>
 SabertoothSimplified ST; // We'll name the Sabertooth object ST.
                          // For how to configure the Sabertooth, see the DIP Switch Wizard for
