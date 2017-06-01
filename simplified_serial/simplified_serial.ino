@@ -1,7 +1,7 @@
 
 //SCRIPT WORKS ON MEGA. GOOD
 
-#define USBCON //uses Tx1 (see SabertoothSimplified.h)
+  #define USBCON //uses Tx1 (see SabertoothSimplified.h)
 #include <SabertoothSimplified.h>
 SabertoothSimplified ST; // We'll name the Sabertooth object ST.
                          // For how to configure the Sabertooth, see the DIP Switch Wizard for

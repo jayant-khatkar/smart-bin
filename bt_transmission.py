@@ -22,9 +22,10 @@ if __name__ == '__main__':
 	bluetooth = bt_connect()
 	num = raw_input('enter num:')
 	if num == 'a':
-		bt_send(bluetooth, 50)
-		time.sleep(10)
-		bt_send(bluetooth,77)	
+		bt_send(bluetooth, 240)
+		bt_send(bluetooth,999)
+		time.sleep(3)
+		bt_send(bluetooth,45678765678765)	
 		bt_close(bluetooth)
 
 
