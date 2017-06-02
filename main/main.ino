@@ -5,7 +5,8 @@
  *        //OUR PIN OUT! ! ! !
  LS7366 Breakout    -------------   Arduino
    -----------------                    -------
-   S1                       7
+   encoder chip:
+   S1                         7
    MOSI                       51
    MISO                       50
    SCLK                       52
@@ -18,8 +19,11 @@
    G                          ENCODER GREEN
   MOTOR S1                    TX1
 
+  bluetooth:
     TX                           10
     RX                            11
+
+   servo:                       8
     
  */
  
@@ -47,6 +51,7 @@ char inChar = -1;
 int i = 0;
 int counter = 1;
 
+//struct for return distance and angle from 1 bluetooth function
 struct bluetooth{
   int distance;
   int angle;
@@ -172,11 +177,11 @@ void setup() {
 
 
   //encoder setup
-//  initEncoders();       Serial.println("Encoders Initialized...");  
-//  clearEncoderCount();  Serial.println("Encoders Cleared...");
+  initEncoders();       Serial.println("Encoders Initialized...");  
+  clearEncoderCount();  Serial.println("Encoders Cleared...");
 
   //servo setup
-  servo.attach(7);
+  servo.attach(8);
   servo.write(90); //calibrate servo for straight direction
 
 }
@@ -196,20 +201,13 @@ void loop()
   //    Serial.println("THE DISTANCE IS: " + String(BluetoothInstance.distance));
       Serial.println("THE ANGLE IS: " + String(BluetoothInstance.angle));
         servo.write(BluetoothInstance.angle);    //write to servo
-        delay(400);
+        delay(400); //wait till servo finished
         Serial1.write(70);  //write to motors
         counter = counter + 1;
-      
 
-      
-      
   }
-
-  
-  //Serial1.write(120);
-  //delay(100);
-  //encoder1count = readEncoder(1); 
-  //Serial.print("Enc1: "); Serial.println(encoder1count); 
+  encoder1count = readEncoder(1); 
+  Serial.print("Enc1: "); Serial.println(encoder1count); 
  delay(200);
 }
 
