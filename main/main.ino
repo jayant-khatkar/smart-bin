@@ -22,19 +22,34 @@
     RX                            11
     
  */
-
-//DEFINES, INCLUDES ETC...
-//~sabertooth
+ 
 #define USBCON //uses Tx1 (see SabertoothSimplified.h)
 #include <SabertoothSimplified.h>
+#include <Servo.h>
+#include "SoftwareSerial.h"
+ #include <SPI.h>
+
+
 SabertoothSimplified ST;
+
+Servo servo;
 
 //~encoders
 const int slaveSelectEnc1 = 7;
 signed long encoder1count = 0;
 
+//~bluetooth
+SoftwareSerial serial_connection(10,11);
+char databuff[6];
+char theta[4];//This is a character buffer where the data sent by the python script will go.
+char dist[3];//This is a character buffer where the data sent by the python script will go.
+char inChar = -1;
+int i = 0;
 
-
+struct bluetooth{
+  int distance;
+  int angle;
+};
 
 
 void initEncoders() {
@@ -109,6 +124,42 @@ void clearEncoderCount() {
 
 
 
+bluetooth read_from_bt(bluetooth BluetoothInstance)
+{
+    Serial.println("we got data");
+    byte byte_count = serial_connection.available();
+    int distVal;
+    int thetaVal;
+
+    // Put the data into the array
+     for(i=0;i<byte_count;i++)//Handle the number of incoming bytes
+    {
+      //Serial.println(byte_count);
+      inChar=serial_connection.read();//Read one byte
+      databuff[i] = inChar;
+    }
+     // Serial.println("the buffer is: " + String(databuff));
+      int dist_hund = databuff[0] - '0'; 
+      int dist_tens = databuff[1] - '0'; 
+      int dist_ones = databuff[2] - '0'; 
+      int theta_hund = databuff[3] - '0'; 
+      int theta_tens = databuff[4] - '0'; 
+      int theta_ones = databuff[5] - '0'; 
+      distVal =   (dist_hund*100 + dist_tens*10 + dist_ones) - 100;
+      thetaVal =  (theta_hund*100 + theta_tens*10 + theta_ones) - 100;
+      BluetoothInstance.distance = distVal;
+      BluetoothInstance.angle = thetaVal;
+      
+      Serial.println(distVal);
+      Serial.println(thetaVal);
+      return BluetoothInstance;
+}
+
+
+  
+
+
+
 
 void setup() {
   //bluetooth setup
@@ -116,34 +167,39 @@ void setup() {
   serial_connection.begin(9600);
 
   //motor setup
-  SabertoothTXPinSerial.begin(9600); // This is the baud rate you chose with the DIP switches.
+//  SabertoothTXPinSerial.begin(9600); // This is the baud rate you chose with the DIP switches.
 
 
   //encoder setup
-  initEncoders();       Serial.println("Encoders Initialized...");  
-  clearEncoderCount();  Serial.println("Encoders Cleared...");
+//  initEncoders();       Serial.println("Encoders Initialized...");  
+//  clearEncoderCount();  Serial.println("Encoders Cleared...");
 
   //servo setup
+  //servo.attach(7);
  
 
 }
 
-void loop() {
+void loop() 
+{
+  int distance;
+  struct bluetooth BluetoothInstance;
 
   //poll bluetooth read
   if (serial_connection.available())
   {
-
-
-    
+      BluetoothInstance = read_from_bt(BluetoothInstance);
+  //    Serial.println("THE DISTANCE IS: " + String(BluetoothInstance.distance));
+  //    Serial.println("THE ANGLE IS: " + String(BluetoothInstance.angle));
+      
   }
   
   
-  Serial1.write(120);
+  //Serial1.write(120);
   //delay(100);
-  encoder1count = readEncoder(1); 
-  Serial.print("Enc1: "); Serial.println(encoder1count); 
-
+  //encoder1count = readEncoder(1); 
+  //Serial.print("Enc1: "); Serial.println(encoder1count); 
+ delay(200);
 }
 
 

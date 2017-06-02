@@ -20,11 +20,12 @@ def bt_close(bluetooth):
 
 if __name__ == '__main__':
 	bluetooth = bt_connect()
-	num = input('enter num:')
+	num = raw_input('enter num:')#python3 uses input(),p2 uses raw_input()
 	if num == 'a':
-		bt_send(bluetooth, 310)
-		bt_send(bluetooth,300)
-		time.sleep(3)	
+# COMZ PROTOCOL: DISTANCE AND ANGLE OFFSETTED BY 100.
+		bt_send(bluetooth, 310180)
+		time.sleep(3)
+		bt_send(bluetooth, 350200)	
 		bt_close(bluetooth)
 
 

@@ -65,8 +65,8 @@ void loop()
       distVal =   dist_hund*100 + dist_tens*10 + dist_ones;
       thetaVal =  theta_hund*100 + theta_tens*10 + theta_ones;
 
-      Serial.print(distVal);
-      Serial.print(thetaVal);
+      Serial.println("distval is "+ String(distVal));
+      Serial.println("thetaVal is "+String(thetaVal));
 
 
 
