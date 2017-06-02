@@ -45,6 +45,7 @@ char theta[4];//This is a character buffer where the data sent by the python scr
 char dist[3];//This is a character buffer where the data sent by the python script will go.
 char inChar = -1;
 int i = 0;
+int counter = 1;
 
 struct bluetooth{
   int distance;
@@ -167,7 +168,7 @@ void setup() {
   serial_connection.begin(9600);
 
   //motor setup
-//  SabertoothTXPinSerial.begin(9600); // This is the baud rate you chose with the DIP switches.
+  SabertoothTXPinSerial.begin(9600); // This is the baud rate you chose with the DIP switches.
 
 
   //encoder setup
@@ -175,8 +176,8 @@ void setup() {
 //  clearEncoderCount();  Serial.println("Encoders Cleared...");
 
   //servo setup
-  //servo.attach(7);
- 
+  servo.attach(7);
+  servo.write(90); //calibrate servo for straight direction
 
 }
 
@@ -185,15 +186,25 @@ void loop()
   int distance;
   struct bluetooth BluetoothInstance;
 
+ 
+
   //poll bluetooth read
   if (serial_connection.available())
   {
+      Serial.println("this loop has ran: "+String(counter));
       BluetoothInstance = read_from_bt(BluetoothInstance);
   //    Serial.println("THE DISTANCE IS: " + String(BluetoothInstance.distance));
-  //    Serial.println("THE ANGLE IS: " + String(BluetoothInstance.angle));
+      Serial.println("THE ANGLE IS: " + String(BluetoothInstance.angle));
+        servo.write(BluetoothInstance.angle);    //write to servo
+        delay(400);
+        Serial1.write(70);  //write to motors
+        counter = counter + 1;
+      
+
+      
       
   }
-  
+
   
   //Serial1.write(120);
   //delay(100);

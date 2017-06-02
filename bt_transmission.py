@@ -23,9 +23,9 @@ if __name__ == '__main__':
 	num = raw_input('enter num:')#python3 uses input(),p2 uses raw_input()
 	if num == 'a':
 # COMZ PROTOCOL: DISTANCE AND ANGLE OFFSETTED BY 100.
-		bt_send(bluetooth, 310180)
+		bt_send(bluetooth, 310000)
 		time.sleep(3)
-		bt_send(bluetooth, 350200)	
+#		bt_send(bluetooth, 350200)	
 		bt_close(bluetooth)
 
 
