@@ -1,5 +1,5 @@
 # creating 2 funcs. 1 to connect.1 to send
-# TESTER SCRIPT FOR TESTING BLUE TOOTHS TIMINGS
+# TESTER SCRIPT FOR TESTING BLUE TOOTHS TIMINGS hunches!!!
 
 
 import serial
@@ -20,12 +20,11 @@ def bt_close(bluetooth):
 
 if __name__ == '__main__':
 	bluetooth = bt_connect()
-	num = raw_input('enter num:')
+	num = input('enter num:')
 	if num == 'a':
-		bt_send(bluetooth, 240)
-		bt_send(bluetooth,999)
-		time.sleep(3)
-		bt_send(bluetooth,45678765678765)	
+		bt_send(bluetooth, 310)
+		bt_send(bluetooth,300)
+		time.sleep(3)	
 		bt_close(bluetooth)
 
 

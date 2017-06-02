@@ -1,4 +1,7 @@
 #include <SoftwareSerial.h>
+//ORIGINAL!
+
+
 
 SoftwareSerial BTSerial(10, 11); // RX | TX
 
