@@ -1,10 +1,9 @@
-//SKELETON FOR ROBOT
+//ROBOT MAIN
 
 /*      PIN OUTS ! ! !
  *       
- *        //OUR PIN OUT! ! ! !
- LS7366 Breakout    -------------   Arduino
-   -----------------                    -------
+ external hardware ------- Arduino
+   --------------------------------
    encoder chip:
    S1                         7
    MOSI                       51
@@ -35,14 +34,17 @@
 
 
 SabertoothSimplified ST;
-
 Servo servo;
 
-//~encoders
+//~~VARIBLES
+
+//encoders
 const int slaveSelectEnc1 = 7;
 signed long encoder1count = 0;
+const int encoder_1cm_counts = 68;
 
-//~bluetooth
+
+//bluetooth
 SoftwareSerial serial_connection(10,11);
 char databuff[6];
 char theta[4];//This is a character buffer where the data sent by the python script will go.
@@ -51,11 +53,19 @@ char inChar = -1;
 int i = 0;
 int counter = 1;
 
-//struct for return distance and angle from 1 bluetooth function
+//struct for return distance and angle from bluetooth function
 struct bluetooth{
   int distance;
   int angle;
 };
+
+struct bluetooth BluetoothInstance;
+boolean motor_on = false;
+boolean motor_forward = true;             //true for forward, false for reverse
+signed long required_encoder_counts = 0;
+
+
+
 
 
 void initEncoders() {
@@ -188,27 +198,65 @@ void setup() {
 
 void loop() 
 {
-  int distance;
-  struct bluetooth BluetoothInstance;
 
  
-
   //poll bluetooth read
   if (serial_connection.available())
   {
-      Serial.println("this loop has ran: "+String(counter));
+     //  Serial.println("THIS LOOP HAS RAN: "+String(counter)+" TIMES"); //DEBUG
+
+      if (motor_on) //if new command is in, stop motors immediately.
+      {
+        Serial1.write(64);
+        motor_forward = true;
+        clearEncoderCount();  Serial.println("Encoders Cleared...");  //DEBUG
+      }
+      
       BluetoothInstance = read_from_bt(BluetoothInstance);
-  //    Serial.println("THE DISTANCE IS: " + String(BluetoothInstance.distance));
-      Serial.println("THE ANGLE IS: " + String(BluetoothInstance.angle));
-        servo.write(BluetoothInstance.angle);    //write to servo
-        delay(400); //wait till servo finished
-        Serial1.write(70);  //write to motors
-        counter = counter + 1;
+    //  Serial.println("THE ANGLE IS: " + String(BluetoothInstance.angle)); //DEBUG
+    //  Serial.println("THE DISTANCE IS: " + String(BluetoothInstance.distance)); //DEBUG
+
+      if (BluetoothInstance.angle > 180)
+      {
+        BluetoothInstance.angle = BluetoothInstance.angle - 180;
+        motor_forward = false;
+      }
+    
+      servo.write(BluetoothInstance.angle);                                     //write to servo
+      delay(400);                                                               //wait till servo finished
+      required_encoder_counts =  BluetoothInstance.distance * encoder_1cm_counts;
+      counter = counter + 1;  //DEBUG
+      motor_on = true;
 
   }
-  encoder1count = readEncoder(1); 
-  Serial.print("Enc1: "); Serial.println(encoder1count); 
- delay(200);
+  if (motor_on)
+  {
+    //drive motors
+    if (motor_forward)
+    {
+      Serial1.write(127);                                                        //write to motors at FORWARD max speed
+    }
+    else
+    {
+      Serial1.write(1);                                                        //write to motors at REVERSE max speed 
+    }
+    
+    //check encoders
+    encoder1count = readEncoder(1); 
+    Serial.print("Enc1: "); Serial.println(encoder1count);  //DEBUG
+    delay(200);
+
+    if (encoder1count >= required_encoder_counts)
+    {
+      Serial1.write(64);                                                        //write to motors to STOP
+      motor_on = false;
+      motor_forward = true;
+      clearEncoderCount();  Serial.println("Encoders Cleared...");  //DEBUG
+    } 
+    
+  }
+  
+
 }
 
 
