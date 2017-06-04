@@ -69,6 +69,10 @@ listener.release(frames)
 
 # initialise variables
 ballSeen = 0
+kernel = np.ones((3,3),np.float32)/8
+Pk = np.eye(6)
+kernel[1,1] = 0
+
 while True:
 
     # Get the latest data from the kinect
@@ -79,7 +83,7 @@ while True:
     registration.apply(color, depth, undistorted, registered)
 
     # Time since last frame
-    dt = depth.timestamp - l_time
+    dt = (depth.timestamp - l_time)/1e3
     '''
     # If we dont know the position of the ball
     if ballSeen < 2:
@@ -102,10 +106,11 @@ while True:
 
     else:
         # Predict where the ball will be
-        predicted_pos = KalmanPredict(x_hat, timeSinceFound)
+        pos = predict_pixel(x_hat, timeSinceFound)
 
         # Search in the predicted region only
-        found, pos = SearchRegion(predicted_pos)
+        regionSize = 150
+        found, pos = SearchRegion(dep_arr, pos, regionSize)
 
         # If we found a reasonable match, update the Kalman state
         if found:
@@ -123,17 +128,21 @@ while True:
     # x_pos = max_pos%512
     # y_pos = int(np.floor(max_pos/512))
     #draw circle
-    img = (depth.asarray()/2**4).astype('uint8')
-    # img = cv2.medianBlur(img,5)
+    analyse_this = depth.asarray() + (depth.asarray()<100)*4000
+    #analyse_this = cv2.filter2D(analyse_this,-1,kernel)
+    img = (analyse_this/2**4).astype('uint8')
+
+
+
 
     #circles = cv2.HoughCircles(img,cv2.HOUGH_GRADIENT,2,100,param1=50,param2=15,minRadius=0,maxRadius=15)
-    found, pos = SearchForBall(depth.asarray(), l_dep_arr)
-    #x_hat = getInitialState(pos,pos_last)
+    found, pos_ind, pos = SearchForBall(analyse_this, l_dep_arr)
+    #x_hat = getInitialState(pos,pos_last, dt)
     pos_last = pos
     img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
 
     # draw the outer circle
-    cv2.circle(img,(pos[0],pos[1]),10,(0,255,0),2)
+    cv2.circle(img,(pos_ind[0],pos_ind[1]),10,(0,255,0),2)
     # draw the center of the circle
     #cv2.circle(img,(i[0],i[1]),2,(0,0,255),3)
 
@@ -156,7 +165,7 @@ while True:
 #        cv2.imshow("color_depth_map", color_depth_map.reshape(424, 512))
 
     l_time = depth.timestamp
-    l_dep_arr = depth.asarray()
+    l_dep_arr = analyse_this
 
 
 
