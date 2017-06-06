@@ -23,10 +23,27 @@ if __name__ == '__main__':
 	num = raw_input('enter num:')#python3 uses input(),p2 uses raw_input()
 	if num == 'a':
 # COMZ PROTOCOL: DISTANCE AND ANGLE OFFSETTED BY 100.
-		bt_send(bluetooth, 310000)
-		time.sleep(3)
-#		bt_send(bluetooth, 350200)	
-		bt_close(bluetooth)
+		bt_send(bluetooth, 310100)	#order: distangle
+		time.sleep(1)
+	num2 = raw_input('enter num2: ')
+	if num2 == 'a':
+		bt_send(bluetooth, 200190)
+		time.sleep(1)
+	num3 = raw_input('enter num3: ')
+	if num3 == 'a':
+		bt_send(bluetooth, 150280)
+		time.sleep(1)
+	num4 = raw_input('enter num4: ')
+	if num4 == 'a':
+		bt_send(bluetooth, 340370)
+		time.sleep(1)
+	num5 = raw_input('enter num5: ')
+	if num5 == 'a':
+		bt_send(bluetooth, 203460)
+		time.sleep(1)
+	bluetooth.close()
+	
+			
 
 
 
