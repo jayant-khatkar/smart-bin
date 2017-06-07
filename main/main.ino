@@ -239,12 +239,12 @@ void loop()
   {
     if(motors_forward == true)
     {
-    Serial1.write(70);
+    Serial1.write(90);
     Serial.println("motors on and FORWARD");
     }
     else if(motors_forward == false)
     {
-     Serial1.write(30);
+     Serial1.write(50);
     Serial.println("motors on and REVERSE");
     }
   
