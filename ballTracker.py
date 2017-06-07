@@ -6,16 +6,19 @@ from pylibfreenect2 import FrameType, Registration, Frame
 from pylibfreenect2 import createConsoleLogger, setGlobalLogger
 from pylibfreenect2 import LoggerLevel
 
+ball_kernel  = np.ones((5,5),np.float32)/25
+outer_kernel = np.ones((25,25),np.float32)/(2*25*4-2**2*4)
+outer_kernel[2:23,2:23] = 0
 
 def SearchForBall(dep_arr, l_dep_arr):
 
     # Find blocks of movement
     diff = np.absolute(l_dep_arr-dep_arr)#*(dep_arr>0)*(l_dep_arr>0)
     diff = diff*(diff>100)
-    diff = cv2.boxFilter(diff, -1, (7,7), anchor=(-1,-1), normalize=False)
+    diff = cv2.boxFilter(diff, -1, (15,15), anchor=(-1,-1), normalize=False)
 
     # Get the locations of the biggest blocks of movement
-    n = 100 #search n best matches
+    n = 1 #search n best matches
     max_val = np.max(np.max(diff))
     max_pos = diff.flatten().argsort()[-n:][::-10]
     xpos = max_pos%512
@@ -29,12 +32,15 @@ def SearchForBall(dep_arr, l_dep_arr):
     posxyz = (0,0,0)
     #print(max_pos)
     #search for circles in the blocks of movement
+    '''
     if max_val>10e3:
         for i in reversed(range(0, len(xpos))):
             #if the region is not on the edge of the image
             if xpos[i]>borderSize and xpos[i]<(512-borderSize) and ypos[i]>borderSize and ypos[i]<(424-borderSize):
                 found, pos = SearchRegion(dep_arr, (xpos[i],ypos[i]), regionSize)
                 posxyz = getCoordinates(pos)
+                '''
+    found, pos = SearchRegion(dep_arr, (xpos[0],ypos[0]), regionSize)
 
     return found, pos, posxyz
 
@@ -59,7 +65,7 @@ def predict_pixel(x_hat, timeSinceFound):
 
 
 def SearchRegion(dep_arr, predicted_pos, regionSize):
-
+    '''
     xpos = predicted_pos[0]
     ypos = predicted_pos[1]
 
@@ -69,20 +75,31 @@ def SearchRegion(dep_arr, predicted_pos, regionSize):
 
     img = (region/2**4).astype('uint8')
 
-    #find the circles
+    #find the ball
+    dst = cv2.filter2D(img,-1,ball_kernel)
+    dst2 = cv2.filter2D(img,-1,outer_kernel)
+    diff = np.float32(dst2)-np.float32(dst)
+    '''
+    img = dep_arr.astype('uint8')
     circles = cv2.HoughCircles(img,cv2.HOUGH_GRADIENT,2,100,param1=50,param2=30,minRadius=0,maxRadius=15)
 
     found = False
     pos = (0,0,0)
-    if  not circles is None:
+    '''
+    if  np.max(diff)>1:
+        pos = np.argmax(diff)
+        found = True
+        pos = (int(pos%regionSize + ypos-regionSize/2) , int(pos/regionSize + xpos-regionSize/2))
+        pos = (pos[0], pos[1], dep_arr[pos[0],pos[1]])
+    '''
+    if  circles is not None:
         circles = np.uint16(np.around(circles))
 
         found = True
         pos = tuple(circles[0,0])
-        pos = (int(pos[0] + ypos-regionSize/2) , int(pos[1] + xpos-regionSize/2), pos[2])
-        pos = (pos[0], pos[1], dep_arr[pos[0],pos[1]])
-
-
+        pos = (int(pos[0]) , int(pos[1]), pos[2])
+        #pos = (pos[0], pos[1], dep_arr[pos[0],pos[1]])
+        print(pos)
     return found,pos
 
 

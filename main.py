@@ -17,7 +17,7 @@ except:
     pipeline = CpuPacketPipeline()
 
 # Create and set logger (displays info on screen)
-logger = createConsoleLogger(LoggerLevel.Debug)
+logger = createConsoleLogger(LoggerLevel.Warning)
 setGlobalLogger(logger)
 
 fn = Freenect2()
@@ -72,7 +72,10 @@ ballSeen = 0
 kernel = np.ones((3,3),np.float32)/8
 Pk = np.eye(6)
 kernel[1,1] = 0
-
+pos_prev = (0,0,0)
+greenLower = (29, 86, 6)
+greenLower = (29, 126, 86)
+greenUpper = (64, 255, 255)
 while True:
 
     # Get the latest data from the kinect
@@ -128,21 +131,27 @@ while True:
     # x_pos = max_pos%512
     # y_pos = int(np.floor(max_pos/512))
     #draw circle
-    analyse_this = depth.asarray() + (depth.asarray()<100)*4000
+    analyse_this = registered.asarray(np.uint8)
+    hsv = cv2.cvtColor(analyse_this, cv2.COLOR_BGR2HSV)
+    mask = cv2.inRange(hsv, greenLower, greenUpper)
+    mask = cv2.dilate(mask, None, iterations=2)
     #analyse_this = cv2.filter2D(analyse_this,-1,kernel)
-    img = (analyse_this/2**4).astype('uint8')
+    #img = (analyse_this/2**4).astype('uint8')
 
 
 
 
     #circles = cv2.HoughCircles(img,cv2.HOUGH_GRADIENT,2,100,param1=50,param2=15,minRadius=0,maxRadius=15)
-    found, pos_ind, pos = SearchForBall(analyse_this, l_dep_arr)
+    '''found, pos_ind, pos = SearchForBall(analyse_this, l_dep_arr)'''
     #x_hat = getInitialState(pos,pos_last, dt)
-    pos_last = pos
-    img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
-
+    #pos_last = pos
+    #img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
+    '''
+    if pos_ind[0] != 0:
+        pos_prev = pos_ind
     # draw the outer circle
-    cv2.circle(img,(pos_ind[0],pos_ind[1]),10,(0,255,0),2)
+    cv2.circle(img,(pos_prev[0],pos_prev[1]),10,(0,255,0),2)
+    '''
     # draw the center of the circle
     #cv2.circle(img,(i[0],i[1]),2,(0,0,255),3)
 
@@ -156,8 +165,9 @@ while True:
     # cv2.imshow("depth2", diff)
     # cv2.imshow("color", cv2.resize(color.asarray(),
     #                               (int(1920 / 3), int(1080 / 3))))
-    cv2.imshow("registered", img)
 
+    cv2.imshow("depth", mask)
+    #cv2.imshow("diff",(l_dep_arr-analyse_this).astype('uint8'))
     # if need_bigdepth:
 #        cv2.imshow("bigdepth", cv2.resize(bigdepth.asarray(np.float32),
 #                                          (int(1920 / 3), int(1082 / 3))))
