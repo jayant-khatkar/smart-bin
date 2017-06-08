@@ -122,7 +122,7 @@ void clearEncoderCount() {
   SPI.transfer(0x00);  // lowest order byte
   digitalWrite(slaveSelectEnc1,HIGH);     // Terminate SPI conversation 
   
-  delayMicroseconds(100);  // provides some breathing room between SPI conversations
+  //delayMicroseconds(100);  // provides some breathing room between SPI conversations
   
   // Set encoder1's current data register to center
   digitalWrite(slaveSelectEnc1,LOW);      // Begin SPI conversation  
@@ -213,7 +213,7 @@ void loop()
       Serial.println("THE DISTANCE IS: " + String(BluetoothInstance.distance));
       Serial.println("THE ANGLE IS: " + String(BluetoothInstance.angle));
 
-      required_counts = BluetoothInstance.distance * 146; //3.4 encoder counts  = 1cm (with 60mm diameter wheels)
+      required_counts = BluetoothInstance.distance * 43; //3.4 encoder counts  = 1cm (with 60mm diameter wheels)
       Serial.println("required counts is : " + String(required_counts));
 
 
@@ -264,8 +264,8 @@ void loop()
   //HAVING ENCODERS IN THE ABOVE IF LOOP FUCKS SHIT UP....NO CLUE WHY...
   encoder1count = readEncoder(1); 
 //  fake_encoder1count = encoder1count/30;
-  Serial.print("Enc1: "); Serial.println(fake_encoder1count); 
-  delay(200);
+  Serial.print("Enc1: "); Serial.println(encoder1count); 
+//  delay(200);
 
   if (abs(encoder1count) > required_counts)
     {

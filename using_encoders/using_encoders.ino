@@ -187,7 +187,7 @@ void setup() {
 void loop() {
  //delay(500);
 
- Serial1.write(120);  //CHANGE TO INTERPUT
+ Serial1.write(80);  //CHANGE TO INTERPUT
  delay(100);
 
  

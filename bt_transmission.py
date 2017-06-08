@@ -22,31 +22,43 @@ def bt_close(bluetooth):
 
 if __name__ == '__main__':
 	bluetooth = bt_connect()
-	num = input('enter num:')#python3 uses input(),p2 uses raw_input()
 
-	if num == 'a':
+
+	try:
+		while True:
+			input = raw_input("Enter dist and angle (3digits for both!):")
+			print "you sent a distance of %s and an angle of %s \n" % (input[:3],input[3:])
+			send_cmd = str(int(input[:3])+100) + str(int(input[3:])+100)
+			print 'command is %s' % send_cmd
+			bt_send(bluetooth, send_cmd)
+	except KeyboardInterrupt:
+		bluetooth.close()
+		print "Finished"
+		
+'''        num = input('enter num:')#python3 uses input(),p2 uses raw_input()
+        if num == 'a':
 # COMZ PROTOCOL: DISTANCE AND ANGLE OFFSETTED BY 100.
-		bt_send(bluetooth, 100190)	#order: distangle
+		bt_send(bluetooth, 150100)	#order: distangle
 		time.sleep(1)
 	num2 = input('enter num2: ')
 	if num2 == 'a':
-		bt_send(bluetooth, 110190)
+		bt_send(bluetooth, 150145)
 		time.sleep(1)
 	num3 = input('enter num3: ')
 	if num3 == 'a':
-		bt_send(bluetooth, 110235)
+		bt_send(bluetooth, 150190)
 		time.sleep(1)
 	num4 = input('enter num4: ')
 	if num4 == 'a':
-		bt_send(bluetooth, 110460)
+		bt_send(bluetooth, 150235)
 		time.sleep(1)
 	num5 = input('enter num5: ')
 	if num5 == 'a':
-		bt_send(bluetooth, 110460)
+		bt_send(bluetooth, 150280)
 		time.sleep(0)
-	bluetooth.close()
+	#bluetooth.close()
 	
-			
+	'''		
 
 
 
