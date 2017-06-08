@@ -20,7 +20,7 @@ def SearchForBall(img):
     mask = cv2.dilate(mask, None, iterations=2)
     cnts = cv2.findContours(mask.copy(), cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)[-2]
     center = None
-
+    cv2.imshow("mask",mask)
 	# only proceed if at least one contour was found
     if len(cnts) > 0:
 		# find the largest contour in the mask, then use
@@ -57,32 +57,16 @@ def predict_pixel(x_hat, timeSinceFound):
     return pos
 
 
-def KalmanUpdate(x_hatprev, Pk, yt, dt):
-    yt = np.array([yt[1],-yt[0],yt[2]])
-    A = np.matrix([[1,0,0,dt,0,0],
-                   [0,1,0,0,dt,0],
-                   [0,0,1,0,0,dt],
-                   [0,0,0,1,0,0],
-                   [0,0,0,0,1,0],
-                   [0,0,0,0,0,1]])
-
-    C = np.matrix([[1,0,0,0,0,0],[0,1,0,0,0,0],[0,0,1,0,0,0]])
-
-    Q = np.ones((6,6))*1e-3
-    R = np.matrix([[1,0,0],[0,1,0],[0,0,1]])*1e-3
-
-    #prediction stage
-    x_hat_predicted = RungeKutta4(x_hatprev, dt)
-    #P_k_predicted   = np.matmul(np.matmul(A,Pk),A.T) + Q
-
-    #Update Stage
-    #frac = (np.matmul(np.matmul(C,P_k_predicted),C.T)+ R)
-    #Kk = np.matmul(np.matmul(P_k_predicted, C.T),frac.I);
-
-    x_hat = x_hat_predicted #+ np.matmul(Kk,(yt - np.matmul(C,x_hat_predicted.T)).T).T;
-    #Pk = np.matmul((np.eye(6)-np.matmul(Kk,C)),P_k_predicted);
-    #x_hat = np.array(list(x_hat.flat))
-    return x_hat, Pk
+def WeightedProjectileUpdate(x_hat_prev, pos,pos_last, dt):
+    x_hat_new = getInitialState(pos,pos_last,dt)
+    x_hat_predicted = RungeKutta4(x_hat_prev, dt)
+    threshold = 0.5
+    lamb = 0.5
+    print(np.absolute(np.sum(x_hat_new[3:6]))-np.absolute(np.sum(x_hat_predicted[3:6])))
+    if np.absolute(np.absolute(np.sum(x_hat_new[3:6]))-np.absolute(np.sum(x_hat_predicted[3:6])))>threshold:
+        return x_hat_new
+    else:
+        return x_hat_new*lamb + x_hat_predicted*(1-lamb)
 
 
 def getCoordinates(pos):

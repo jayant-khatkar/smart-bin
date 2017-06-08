@@ -101,8 +101,18 @@ while True:
 
         # If we see the ball two frames in a row,
         # get the initial state of the Kalman filter
-        if ballSeen>=2:
+        if ballSeen==2:
            x_hat = getInitialState(pos,pos_last,dt)
+
+        if ballSeen>2:
+            x_hat = WeightedProjectileUpdate(x_hat, pos,pos_last, dt)
+            #print(x_hat)
+            for timeInFuture in range(0,80):
+                # Predict where the ball will be
+
+                future_pos = predict_pixel(x_hat, timeInFuture/5)
+                #print(future_pos)
+                cv2.circle(analyse_this, future_pos, 5, (0, 0, 255), -1)
 
     else:
         ballSeen = 0
@@ -110,15 +120,6 @@ while True:
     pos_last = pos
 
 
-    if ballSeen>2 and x is not None:
-        #x_hat, Pk = KalmanUpdate(x_hat, Pk, np.array(pos).T, dt)
-        #print(x_hat)
-        for timeInFuture in range(0,80):
-            # Predict where the ball will be
-
-            future_pos = predict_pixel(x_hat, timeInFuture/5)
-            #print(future_pos)
-            cv2.circle(analyse_this, future_pos, 5, (0, 0, 255), -1)
 
     # cv2.imshow("ir", ir.asarray() / 65535.)
     # cv2.imshow("depth", depth / 4500.)
