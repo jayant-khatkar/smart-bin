@@ -96,7 +96,9 @@ while True:
 	# only proceed if at least one contour was found
     ((x, y), radius) = SearchForBall(analyse_this)
     if x is not None:
+        #print((int(x), int(y), depth.asarray()[int(y),int(x)]))
         pos = getCoordinates((int(x), int(y), depth.asarray()[int(y),int(x)]))
+        print(pos)
 
 
     # If we dont know the position of the ball
@@ -122,21 +124,20 @@ while True:
     pos_last = pos
 
 
-    if ballSeen>2:
+    if ballSeen>20000 and x is not None:
+        x_hat, Pk = KalmanUpdate(x_hat, Pk, np.array(pos).T, dt)
         for timeInFuture in range(0,20):
             # Predict where the ball will be
             future_pos = predict_pixel(x_hat, timeInFuture/10)
             cv2.circle(analyse_this, future_pos, 5, (0, 0, 255), -1)
-        '''
-            x_hat, Pk = KalmanUpdate(x_hat, Pk)
-            timeSinceFound = 0
+        #    timeSinceFound = 0
 
         # Otherwise, keep going for 0.5s before giving up
         else:
             timeSinceFound = timeSinceFound + dt
             if timeSinceFound >500: #haven't seen ball for 0.5 second
                 ballSeen=0    #then consider the ball lost
-        '''
+
     # cv2.imshow("ir", ir.asarray() / 65535.)
     # cv2.imshow("depth", depth / 4500.)
 

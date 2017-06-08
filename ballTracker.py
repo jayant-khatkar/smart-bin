@@ -57,25 +57,34 @@ def predict_pixel(x_hat, timeSinceFound):
     return pos
 
 
-def KalmanUpdate(x_hat, Pk, dt):
+def KalmanUpdate(x_hatprev, Pk, yt, dt):
 
     A = np.matrix([[1,0,0,dt,0,0],
                    [0,1,0,0,dt,0],
                    [0,0,1,0,0,dt],
-                   [0,0,0,1+a*dt,0,0],
-                   [0,0,0,0,1+a*dt,0],
-                   [0,0,0,0,0,1+a*dt]])
+                   [0,0,0,1,0,0],
+                   [0,0,0,0,1,0],
+                   [0,0,0,0,0,1]])
 
     C = np.matrix([[1,0,0,0,0,0],[0,1,0,0,0,0],[0,0,1,0,0,0]])
 
     Q = np.ones((6,6))*1e-6
     R = np.matrix([[1,0,0],[0,1,0],[0,0,1]])
+
+    #prediction stage
+    x_hat_predicted = RungeKutta4(x_hatprev, dt)
     P_k_predicted   = np.matmul(np.matmul(A,Pk),A.T) + Q
+
+    #Update Stage
     frac = (np.matmul(np.matmul(C,P_k_predicted),C.T)+ R)
     Kk = np.matmul(np.matmul(P_k_predicted, C.T),frac.I);
-    #x_hat = x_hat_predicted + Kk*(yt - C*x_hat_predicted);
-    #Pk = (I-Kk*C)*P_k_predicted;
-
+    print(Kk.shape)
+    print(yt.shape)
+    print((np.matmul(C,x_hat_predicted.T).shape))
+    x_hat = x_hat_predicted + np.matmul(Kk,(yt - np.matmul(C,x_hat_predicted.T)));
+    Pk = np.matmul((np.eye(6)-np.matmul(Kk,C)),P_k_predicted);
+    print(x_hat)
+    print(C*x_hat_predicted.T)
     return x_hat, Pk
 
 
@@ -87,8 +96,8 @@ def getCoordinates(pos):
     fy = 366.051208
 
     z = pos[2]*1e-3
-    x = (pos[1] - cx) * fx * z/1e4
-    y = (pos[0] - cy) * fy * z/1e4
+    x = (pos[1] - cx) * z / fx
+    y = (pos[0] - cy) * z / fy
 
     coordinates = (y,x,z)
     return coordinates
@@ -102,8 +111,8 @@ def getPixel(pos):
     z = pos[2]
 
     if z!=0:
-        x = int(pos[1]/(fx * z/1e4) + cx)
-        y = int(pos[0]/(fy * z/1e4) + cy)
+        x = int(pos[1])*fx/(z + cx)
+        y = int(pos[0])*fy/(z + cy)
     else:
         x = 0
         y = 0
