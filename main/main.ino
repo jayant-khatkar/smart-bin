@@ -193,6 +193,7 @@ void loop()
 {
   int distance;
   struct bluetooth BluetoothInstance;
+  int prev_angle, delta_angle;
 
  
 
@@ -212,7 +213,7 @@ void loop()
       Serial.println("THE DISTANCE IS: " + String(BluetoothInstance.distance));
       Serial.println("THE ANGLE IS: " + String(BluetoothInstance.angle));
 
-      required_counts = BluetoothInstance.distance * 3.4; //3.4 encoder counts  = 1cm (with 60mm diameter wheels)
+      required_counts = BluetoothInstance.distance * 146; //3.4 encoder counts  = 1cm (with 60mm diameter wheels)
       Serial.println("required counts is : " + String(required_counts));
 
 
@@ -229,10 +230,21 @@ void loop()
       }
       
         servo.write(BluetoothInstance.angle);    //write to servo
-        delay(400); //wait till servo finished
+        delta_angle = BluetoothInstance.angle - prev_angle;
+        
+
+
+        delay(510); //wait till servo finished
         
         counter = counter + 1;
-        motors_on = true;
+        if (BluetoothInstance.distance > 0)
+        {
+          motors_on = true;
+        }
+        else
+        {
+          motors_on = false;
+        }
 
   }
   if (motors_on)
@@ -251,11 +263,11 @@ void loop()
   }
   //HAVING ENCODERS IN THE ABOVE IF LOOP FUCKS SHIT UP....NO CLUE WHY...
   encoder1count = readEncoder(1); 
-  fake_encoder1count = encoder1count/30;
+//  fake_encoder1count = encoder1count/30;
   Serial.print("Enc1: "); Serial.println(fake_encoder1count); 
   delay(200);
 
-  if (abs(fake_encoder1count) > required_counts)
+  if (abs(encoder1count) > required_counts)
     {
       Serial.println("REACHED DESITNATION. STOP!...cunt");
       Serial1.write(64);
