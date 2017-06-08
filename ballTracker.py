@@ -58,7 +58,7 @@ def predict_pixel(x_hat, timeSinceFound):
 
 
 def KalmanUpdate(x_hatprev, Pk, yt, dt):
-
+    yt = np.array([yt[1],-yt[0],yt[2]])
     A = np.matrix([[1,0,0,dt,0,0],
                    [0,1,0,0,dt,0],
                    [0,0,1,0,0,dt],
@@ -68,23 +68,20 @@ def KalmanUpdate(x_hatprev, Pk, yt, dt):
 
     C = np.matrix([[1,0,0,0,0,0],[0,1,0,0,0,0],[0,0,1,0,0,0]])
 
-    Q = np.ones((6,6))*1e-6
-    R = np.matrix([[1,0,0],[0,1,0],[0,0,1]])
+    Q = np.ones((6,6))*1e-3
+    R = np.matrix([[1,0,0],[0,1,0],[0,0,1]])*1e-3
 
     #prediction stage
     x_hat_predicted = RungeKutta4(x_hatprev, dt)
-    P_k_predicted   = np.matmul(np.matmul(A,Pk),A.T) + Q
+    #P_k_predicted   = np.matmul(np.matmul(A,Pk),A.T) + Q
 
     #Update Stage
-    frac = (np.matmul(np.matmul(C,P_k_predicted),C.T)+ R)
-    Kk = np.matmul(np.matmul(P_k_predicted, C.T),frac.I);
-    print(Kk.shape)
-    print(yt.shape)
-    print((np.matmul(C,x_hat_predicted.T).shape))
-    x_hat = x_hat_predicted + np.matmul(Kk,(yt - np.matmul(C,x_hat_predicted.T)));
-    Pk = np.matmul((np.eye(6)-np.matmul(Kk,C)),P_k_predicted);
-    print(x_hat)
-    print(C*x_hat_predicted.T)
+    #frac = (np.matmul(np.matmul(C,P_k_predicted),C.T)+ R)
+    #Kk = np.matmul(np.matmul(P_k_predicted, C.T),frac.I);
+
+    x_hat = x_hat_predicted #+ np.matmul(Kk,(yt - np.matmul(C,x_hat_predicted.T)).T).T;
+    #Pk = np.matmul((np.eye(6)-np.matmul(Kk,C)),P_k_predicted);
+    #x_hat = np.array(list(x_hat.flat))
     return x_hat, Pk
 
 
@@ -111,8 +108,8 @@ def getPixel(pos):
     z = pos[2]
 
     if z!=0:
-        x = int(pos[1])*fx/(z + cx)
-        y = int(pos[0])*fy/(z + cy)
+        x = int(pos[1]*fx/(z) + cx)
+        y = int(pos[0]*fy/(z) + cy)
     else:
         x = 0
         y = 0
@@ -120,14 +117,15 @@ def getPixel(pos):
     return (y,x)
 
 def ballDynamics(xt, dt):
+    dt = dt*1e-3
     a = -0.0
     g = -9.8
-    x_dot = -(1+a*dt)*xt[3]
+    x_dot = -(1+a*dt)*xt[3] - g*dt
     y_dot = (1+a*dt)*xt[4] #+ g*dt
     z_dot = (1+a*dt)*xt[5]
 
     x_dd = -a*xt[3]
-    y_dd = a*xt[4] #- g
+    y_dd = a*xt[4] #+ g
     z_dd = a*xt[5]
 
     xt_dot = np.array([x_dot,y_dot,z_dot,x_dd,y_dd,z_dd])

@@ -42,11 +42,7 @@ device.start()
 registration = Registration(device.getIrCameraParams(),
                             device.getColorCameraParams())
 print('-----------------------')
-print(device.getIrCameraParams().cx)
-print(device.getIrCameraParams().cy)
-print(device.getIrCameraParams().fx)
-print(device.getIrCameraParams().fy)
-print('-----------------------')
+
 undistorted = Frame(512, 424, 4)
 registered = Frame(512, 424, 4)
 
@@ -77,6 +73,7 @@ greenLower = (29, 86, 6)
 greenLower = (29, 126, 86)
 greenUpper = (64, 255, 255)
 pos=(0,0,0)
+timeSinceFound = 0
 while True:
 
     # Get the latest data from the kinect
@@ -95,22 +92,10 @@ while True:
 
 	# only proceed if at least one contour was found
     ((x, y), radius) = SearchForBall(analyse_this)
+
     if x is not None:
-        #print((int(x), int(y), depth.asarray()[int(y),int(x)]))
         pos = getCoordinates((int(x), int(y), depth.asarray()[int(y),int(x)]))
-        print(pos)
 
-
-    # If we dont know the position of the ball
-    # If we dont know the position of the ball
-    # If we dont know the position of the ball
-    # If we dont know the position of the ball
-    # If we dont know the position of the ball
-    # If we dont know the position of the ball
-
-        # Search frame thoroughly
-
-    if x is not None:
         ballSeen = ballSeen + 1
         timeSinceFound = 0
 
@@ -121,22 +106,19 @@ while True:
 
     else:
         ballSeen = 0
+        timeSinceFound = timeSinceFound + dt
     pos_last = pos
 
 
-    if ballSeen>20000 and x is not None:
-        x_hat, Pk = KalmanUpdate(x_hat, Pk, np.array(pos).T, dt)
-        for timeInFuture in range(0,20):
+    if ballSeen>2 and x is not None:
+        #x_hat, Pk = KalmanUpdate(x_hat, Pk, np.array(pos).T, dt)
+        #print(x_hat)
+        for timeInFuture in range(0,80):
             # Predict where the ball will be
-            future_pos = predict_pixel(x_hat, timeInFuture/10)
-            cv2.circle(analyse_this, future_pos, 5, (0, 0, 255), -1)
-        #    timeSinceFound = 0
 
-        # Otherwise, keep going for 0.5s before giving up
-        else:
-            timeSinceFound = timeSinceFound + dt
-            if timeSinceFound >500: #haven't seen ball for 0.5 second
-                ballSeen=0    #then consider the ball lost
+            future_pos = predict_pixel(x_hat, timeInFuture/5)
+            #print(future_pos)
+            cv2.circle(analyse_this, future_pos, 5, (0, 0, 255), -1)
 
     # cv2.imshow("ir", ir.asarray() / 65535.)
     # cv2.imshow("depth", depth / 4500.)
