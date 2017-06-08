@@ -76,6 +76,7 @@ pos_prev = (0,0,0)
 greenLower = (29, 86, 6)
 greenLower = (29, 126, 86)
 greenUpper = (64, 255, 255)
+pos=(0,0,0)
 while True:
 
     # Get the latest data from the kinect
@@ -87,36 +88,46 @@ while True:
 
     # Time since last frame
     dt = (depth.timestamp - l_time)/1e3
-    '''
+
+    analyse_this = registered.asarray(np.uint8)
+
+
+
+	# only proceed if at least one contour was found
+    ((x, y), radius) = SearchForBall(analyse_this)
+    if x is not None:
+        pos = getCoordinates((int(x), int(y), depth.asarray()[int(y),int(x)]))
+
+
     # If we dont know the position of the ball
-    if ballSeen < 2:
+    # If we dont know the position of the ball
+    # If we dont know the position of the ball
+    # If we dont know the position of the ball
+    # If we dont know the position of the ball
+    # If we dont know the position of the ball
 
         # Search frame thoroughly
-        found, pos = SearchForBall(depth.asarray(), l_dep_arr)
 
-        if found:
-            ballSeen = ballSeen + 1
-            timeSinceFound = 0
+    if x is not None:
+        ballSeen = ballSeen + 1
+        timeSinceFound = 0
 
-            # If we see the ball two frames in a row,
-            # get the initial state of the Kalman filter
-            if ballSeen==2:
-                x_hat = getInitialState(pos,pos_last)
-
-        else:
-            ballSeen = 0
-        pos_last = pos
+        # If we see the ball two frames in a row,
+        # get the initial state of the Kalman filter
+        if ballSeen>=2:
+           x_hat = getInitialState(pos,pos_last,dt)
 
     else:
-        # Predict where the ball will be
-        pos = predict_pixel(x_hat, timeSinceFound)
+        ballSeen = 0
+    pos_last = pos
 
-        # Search in the predicted region only
-        regionSize = 150
-        found, pos = SearchRegion(dep_arr, pos, regionSize)
 
-        # If we found a reasonable match, update the Kalman state
-        if found:
+    if ballSeen>2:
+        for timeInFuture in range(0,20):
+            # Predict where the ball will be
+            future_pos = predict_pixel(x_hat, timeInFuture/10)
+            cv2.circle(analyse_this, future_pos, 5, (0, 0, 255), -1)
+        '''
             x_hat, Pk = KalmanUpdate(x_hat, Pk)
             timeSinceFound = 0
 
@@ -125,54 +136,15 @@ while True:
             timeSinceFound = timeSinceFound + dt
             if timeSinceFound >500: #haven't seen ball for 0.5 second
                 ballSeen=0    #then consider the ball lost
-    '''
-    # max_pos = np.argmax(diff)
-    # max_val = np.max(diff)
-    # x_pos = max_pos%512
-    # y_pos = int(np.floor(max_pos/512))
-    #draw circle
-    analyse_this = registered.asarray(np.uint8)
-    hsv = cv2.cvtColor(analyse_this, cv2.COLOR_BGR2HSV)
-    mask = cv2.inRange(hsv, greenLower, greenUpper)
-    mask = cv2.dilate(mask, None, iterations=2)
-    #analyse_this = cv2.filter2D(analyse_this,-1,kernel)
-    #img = (analyse_this/2**4).astype('uint8')
-
-
-
-
-    #circles = cv2.HoughCircles(img,cv2.HOUGH_GRADIENT,2,100,param1=50,param2=15,minRadius=0,maxRadius=15)
-    '''found, pos_ind, pos = SearchForBall(analyse_this, l_dep_arr)'''
-    #x_hat = getInitialState(pos,pos_last, dt)
-    #pos_last = pos
-    #img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
-    '''
-    if pos_ind[0] != 0:
-        pos_prev = pos_ind
-    # draw the outer circle
-    cv2.circle(img,(pos_prev[0],pos_prev[1]),10,(0,255,0),2)
-    '''
-    # draw the center of the circle
-    #cv2.circle(img,(i[0],i[1]),2,(0,0,255),3)
-
-
-    #disp_image = registered.asarray(np.uint8)
-    # print(max_val)
-    # if max_val>10000:
-        # cv2.circle(disp_image, (x_pos,y_pos), 10, 255, thickness=3, lineType=8, shift=0)
+        '''
     # cv2.imshow("ir", ir.asarray() / 65535.)
     # cv2.imshow("depth", depth / 4500.)
-    # cv2.imshow("depth2", diff)
-    # cv2.imshow("color", cv2.resize(color.asarray(),
-    #                               (int(1920 / 3), int(1080 / 3))))
 
-    cv2.imshow("depth", mask)
-    #cv2.imshow("diff",(l_dep_arr-analyse_this).astype('uint8'))
-    # if need_bigdepth:
-#        cv2.imshow("bigdepth", cv2.resize(bigdepth.asarray(np.float32),
-#                                          (int(1920 / 3), int(1082 / 3))))
-#    if need_color_depth_map:
-#        cv2.imshow("color_depth_map", color_depth_map.reshape(424, 512))
+    if x is not None:
+        cv2.circle(analyse_this, (int(x), int(y)), int(radius),(0, 255, 255), 2)
+
+    cv2.imshow("depth", analyse_this)
+
 
     l_time = depth.timestamp
     l_dep_arr = analyse_this

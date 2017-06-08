@@ -9,40 +9,33 @@ from pylibfreenect2 import LoggerLevel
 ball_kernel  = np.ones((5,5),np.float32)/25
 outer_kernel = np.ones((25,25),np.float32)/(2*25*4-2**2*4)
 outer_kernel[2:23,2:23] = 0
-
-def SearchForBall(dep_arr, l_dep_arr):
-
-    # Find blocks of movement
-    diff = np.absolute(l_dep_arr-dep_arr)#*(dep_arr>0)*(l_dep_arr>0)
-    diff = diff*(diff>100)
-    diff = cv2.boxFilter(diff, -1, (15,15), anchor=(-1,-1), normalize=False)
-
-    # Get the locations of the biggest blocks of movement
-    n = 1 #search n best matches
-    max_val = np.max(np.max(diff))
-    max_pos = diff.flatten().argsort()[-n:][::-10]
-    xpos = max_pos%512
-    ypos = np.floor(max_pos/512).astype('int')
+greenLower = (29, 86, 6)
+greenLower = (29, 126, 86)
+greenUpper = (64, 255, 255)
 
 
-    regionSize = 150
-    borderSize = 50 + regionSize/2
-    found = False
-    pos = (0,0,0)
-    posxyz = (0,0,0)
-    #print(max_pos)
-    #search for circles in the blocks of movement
-    '''
-    if max_val>10e3:
-        for i in reversed(range(0, len(xpos))):
-            #if the region is not on the edge of the image
-            if xpos[i]>borderSize and xpos[i]<(512-borderSize) and ypos[i]>borderSize and ypos[i]<(424-borderSize):
-                found, pos = SearchRegion(dep_arr, (xpos[i],ypos[i]), regionSize)
-                posxyz = getCoordinates(pos)
-                '''
-    found, pos = SearchRegion(dep_arr, (xpos[0],ypos[0]), regionSize)
+def SearchForBall(img):
+    hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+    mask = cv2.inRange(hsv, greenLower, greenUpper)
+    mask = cv2.dilate(mask, None, iterations=2)
+    cnts = cv2.findContours(mask.copy(), cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)[-2]
+    center = None
 
-    return found, pos, posxyz
+	# only proceed if at least one contour was found
+    if len(cnts) > 0:
+		# find the largest contour in the mask, then use
+		# it to compute the minimum enclosing circle and
+		# centroid
+        c = max(cnts, key=cv2.contourArea)
+        ((x, y), radius) = cv2.minEnclosingCircle(c)
+
+		# only proceed if the radius meets a minimum size
+        if radius > 3:
+            return ((x, y), radius)
+        else:
+            return ((None,None),None)
+    else:
+        return ((None,None),None)
 
 
 def getInitialState(pos,pos_last, dt):
@@ -50,7 +43,7 @@ def getInitialState(pos,pos_last, dt):
     x_hat = np.array([  pos[1],
                         pos[0],
                         pos[2],
-                        (pos[1] - pos_last[1])*dt,
+                        -(pos[1] - pos_last[1])*dt,
                         (pos[0] - pos_last[0])*dt,
                         (pos[2] - pos_last[2])*dt])
 
@@ -59,48 +52,9 @@ def getInitialState(pos,pos_last, dt):
 
 def predict_pixel(x_hat, timeSinceFound):
     x_new = RungeKutta4(x_hat, timeSinceFound)
-    pos = (x_new[0],x_new[1], x_new[2])
+    pos = (x_new[1],x_new[0], x_new[2])
     pos = getPixel(pos)
     return pos
-
-
-def SearchRegion(dep_arr, predicted_pos, regionSize):
-    '''
-    xpos = predicted_pos[0]
-    ypos = predicted_pos[1]
-
-    # Crop Region
-    region = dep_arr[xpos-regionSize/2:xpos+regionSize/2,
-                     ypos-regionSize/2:ypos+regionSize/2]
-
-    img = (region/2**4).astype('uint8')
-
-    #find the ball
-    dst = cv2.filter2D(img,-1,ball_kernel)
-    dst2 = cv2.filter2D(img,-1,outer_kernel)
-    diff = np.float32(dst2)-np.float32(dst)
-    '''
-    img = dep_arr.astype('uint8')
-    circles = cv2.HoughCircles(img,cv2.HOUGH_GRADIENT,2,100,param1=50,param2=30,minRadius=0,maxRadius=15)
-
-    found = False
-    pos = (0,0,0)
-    '''
-    if  np.max(diff)>1:
-        pos = np.argmax(diff)
-        found = True
-        pos = (int(pos%regionSize + ypos-regionSize/2) , int(pos/regionSize + xpos-regionSize/2))
-        pos = (pos[0], pos[1], dep_arr[pos[0],pos[1]])
-    '''
-    if  circles is not None:
-        circles = np.uint16(np.around(circles))
-
-        found = True
-        pos = tuple(circles[0,0])
-        pos = (int(pos[0]) , int(pos[1]), pos[2])
-        #pos = (pos[0], pos[1], dep_arr[pos[0],pos[1]])
-        print(pos)
-    return found,pos
 
 
 def KalmanUpdate(x_hat, Pk, dt):
@@ -154,17 +108,17 @@ def getPixel(pos):
         x = 0
         y = 0
 
-    return (y,x,z)
+    return (y,x)
 
 def ballDynamics(xt, dt):
-    a = -0.5
+    a = -0.0
     g = -9.8
-    x_dot = (1+a*dt)*xt[3]
-    y_dot = (1+a*dt)*xt[4] + g*dt
+    x_dot = -(1+a*dt)*xt[3]
+    y_dot = (1+a*dt)*xt[4] #+ g*dt
     z_dot = (1+a*dt)*xt[5]
 
-    x_dd = a*xt[3]
-    y_dd = a*xt[4] + g
+    x_dd = -a*xt[3]
+    y_dd = a*xt[4] #- g
     z_dd = a*xt[5]
 
     xt_dot = np.array([x_dot,y_dot,z_dot,x_dd,y_dd,z_dd])
